@@ -32,14 +32,16 @@ module Sidekiq::Status
                   end
 
       # Store data if the job is a Sidekiq::Status::Worker
+
       if job_class && job_class.ancestors.include?(Sidekiq::Status::Worker)
+        jid = job_class.respond_to?(:status_job_id) ? job_class.status_job_id(msg['jid'], msg["args"][0]) : msg['jid']
         initial_metadata = {
-          jid: msg['jid'],
+          jid: jid,
           status: :queued,
           worker: JOB_CLASS.new(msg, queue).display_class,
           args: display_args(msg, queue)
         }
-        store_for_id msg['jid'], initial_metadata, job_class.new.expiration || @expiration, redis_pool
+        store_for_id jid, initial_metadata, job_class.new.expiration || @expiration, redis_pool
       end
 
       yield
