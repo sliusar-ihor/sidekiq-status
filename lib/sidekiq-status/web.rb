@@ -5,7 +5,7 @@ module Sidekiq::Status
   module Web
     # Location of Sidekiq::Status::Web view templates
     VIEW_PATH = File.expand_path('../../../web/views', __FILE__)
-
+    MAX_RESULT_ON_STATUS_PAGE = 100000
     DEFAULT_PER_PAGE_OPTS = [25, 50, 100].freeze
     DEFAULT_PER_PAGE = 25
     COMMON_STATUS_HASH_KEYS = %w(update_time jid status worker args label pct_complete total at message)
@@ -80,12 +80,20 @@ module Sidekiq::Status
       end
 
       app.get '/statuses' do
-
-        jids = Sidekiq.redis do |conn|
-          conn.scan_each(match: 'sidekiq:status:*', count: 100).map do |key|
-            key.split(':').last
-          end.uniq
+        jids = []
+        Sidekiq.redis do |conn|
+          conn.scan_each(match: 'sidekiq:status:*', count: 100).each_with_index do |key, index|
+            break if index > MAX_RESULT_ON_STATUS_PAGE
+            jids.push key.split(':').last
+          end
         end
+        @total_size = jids.count
+        @count = params[:per_page] ? params[:per_page].to_i : Sidekiq::Status::Web.default_per_page
+        @count = @total_size if params[:per_page] == 'all'
+        @current_page = params[:page].to_i < 1 ? 1 : params[:page].to_i
+
+        jids = jids.slice((@current_page - 1) * @count, @count) || []
+
         @statuses = []
 
         jids.each do |jid|
@@ -108,13 +116,6 @@ module Sidekiq::Status
         if params[:status] && params[:status] != "all"
           @statuses = @statuses.select {|job_status| job_status["status"] == params[:status] }
         end
-
-        # Sidekiq pagination
-        @total_size = @statuses.count
-        @count = params[:per_page] ? params[:per_page].to_i : Sidekiq::Status::Web.default_per_page
-        @count = @total_size if params[:per_page] == 'all'
-        @current_page = params[:page].to_i < 1 ? 1 : params[:page].to_i
-        @statuses = @statuses.slice((@current_page - 1) * @count, @count)
 
         @headers = [
           {id: "worker", name: "Worker / JID", class: nil, url: nil},
