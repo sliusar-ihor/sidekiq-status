@@ -1,18 +1,5 @@
 <% require 'cgi'; def h(v); CGI.escape_html(v.to_s); end %>
-<style>
-  .progress {
-    background-color: #C8E1ED;
-  }
-  .progress-percentage {
-    margin: 5px;
-    padding-left: 4px;
-    color: #333;
-    text-align: left;
-    text-shadow: 0 0 5px white;
-    font-weight: bold;
-    font-size: 14px;
-  }
-</style>
+<% style_tag "statuses/stylesheets/status.css" %>
 
 <h3>
   Job Status: <%= h @status["jid"] %>
@@ -21,7 +8,7 @@
   </span>
 </h3>
 
-<div class="progress" style="height: 30px;">
+<div class="progress-full">
   <div class="progress-bar" role="progressbar" aria-valuenow="<%= @status["pct_complete"].to_i %>" aria-valuemin="0" aria-valuemax="100" style="width: <%= @status["pct_complete"].to_i %>%">
     <div class="progress-percentage">
       <%= @status["pct_complete"].to_i %>%
