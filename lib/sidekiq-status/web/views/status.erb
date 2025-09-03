@@ -1,5 +1,6 @@
 <% require 'cgi'; def h(v); CGI.escape_html(v.to_s); end %>
 <% style_tag "statuses/stylesheets/status.css" %>
+<%= script_tag "statuses/js/progress.js" %>
 
 <h3>
   Job Status: <%= h @status["jid"] %>

@@ -133,7 +133,7 @@ if Sidekiq::MAJOR >= 8
       tab: ["Statuses"],
       index: "statuses",
       root_dir: File.expand_path("../../web", File.dirname(__FILE__)),
-      asset_paths: ["stylesheets"]
+      asset_paths: ["stylesheets", "js"]
     )
   end
 elsif Sidekiq::MAJOR > 6
